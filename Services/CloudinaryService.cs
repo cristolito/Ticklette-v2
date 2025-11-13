@@ -5,25 +5,16 @@ namespace Ticklette.Services;
 
 public class CloudinaryService
 {
-    private readonly Cloudinary _cloudinary;
+    private Cloudinary _cloudinary;
     private readonly IConfiguration _configuration;
 
     public CloudinaryService(IConfiguration configuration)
     {
         _configuration = configuration;
-        
+
         var cloudinaryConfig = _configuration.GetSection("Cloudinary");
-        var cloudName = cloudinaryConfig["CloudName"];
-        var apiKey = cloudinaryConfig["ApiKey"];
-        var apiSecret = cloudinaryConfig["ApiSecret"];
-
-        if (string.IsNullOrEmpty(cloudName) || string.IsNullOrEmpty(apiKey) || string.IsNullOrEmpty(apiSecret))
-        {
-            throw new InvalidOperationException("Cloudinary configuration is missing in appsettings.json");
-        }
-
-        var account = new Account(cloudName, apiKey, apiSecret);
-        _cloudinary = new Cloudinary(account)
+        var cloudinaryUrl = cloudinaryConfig["CLOUDINARY_URL"];
+        _cloudinary = new Cloudinary(cloudinaryUrl)
         {
             Api = { Secure = true }
         };
@@ -43,20 +34,44 @@ public class CloudinaryService
         if (file.Length > 5 * 1024 * 1024)
             throw new ArgumentException("File size exceeds 5MB");
 
-        await using var stream = file.OpenReadStream();
-        
+        var cloudinaryConfig = _configuration.GetSection("Cloudinary");
+        var cloudinaryUrl = cloudinaryConfig["CLOUDINARY_URL"];
+        _cloudinary = new Cloudinary(cloudinaryUrl)
+        {
+            Api = { Secure = true }
+        };
+        // usa memory stream para subir la imagen
+        using var memoryStream = new MemoryStream();
+        await file.CopyToAsync(memoryStream);
+        memoryStream.Position = 0;
+
         var uploadParams = new ImageUploadParams
         {
-            File = new FileDescription(file.FileName, stream),
-            Folder = $"ticklette/events/{subFolder}" // Organizar en carpeta
+            File = new FileDescription(file.FileName, memoryStream),
         };
 
-        return await _cloudinary.UploadAsync(uploadParams);
+        // try catch para manejo de errores
+        try
+        {
+            return await _cloudinary.UploadAsync(uploadParams);
+        }
+        catch (Exception ex)
+        {
+            // Manejar el error según sea necesario (log, rethrow, etc.)
+            throw new InvalidOperationException("Error uploading image to Cloudinary", ex);
+        }
     }
 
     // ✅ Eliminar imagen de Cloudinary
     public async Task<DeletionResult> DeleteImageAsync(string publicId)
     {
+        var cloudinaryConfig = _configuration.GetSection("Cloudinary");
+        var cloudinaryUrl = cloudinaryConfig["CLOUDINARY_URL"];
+        _cloudinary = new Cloudinary(cloudinaryUrl)
+        {
+            Api = { Secure = true }
+        };
+
         var deleteParams = new DeletionParams(publicId);
         return await _cloudinary.DestroyAsync(deleteParams);
     }
@@ -64,6 +79,12 @@ public class CloudinaryService
     // ✅ Obtener URL de imagen optimizada
     public string GetOptimizedImageUrl(string publicId, int width = 800, int height = 600)
     {
+        var cloudinaryConfig = _configuration.GetSection("Cloudinary");
+        var cloudinaryUrl = cloudinaryConfig["CLOUDINARY_URL"];
+        _cloudinary = new Cloudinary(cloudinaryUrl)
+        {
+            Api = { Secure = true }
+        };
         return _cloudinary.Api.UrlImgUp
             .Transform(new Transformation()
                 .Width(width)
@@ -77,6 +98,12 @@ public class CloudinaryService
     // ✅ Extraer publicId de la URL de Cloudinary
     public string ExtractPublicIdFromUrl(string imageUrl)
     {
+        var cloudinaryConfig = _configuration.GetSection("Cloudinary");
+        var cloudinaryUrl = cloudinaryConfig["CLOUDINARY_URL"];
+        _cloudinary = new Cloudinary(cloudinaryUrl)
+        {
+            Api = { Secure = true }
+        };
         var uri = new Uri(imageUrl);
         var segments = uri.Segments;
         // La estructura típica es: /v1234567890/folder/image.jpg
