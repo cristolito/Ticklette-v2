@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Ticklette.Domain.Data;
 using Ticklette.Domain.Models;
+using Ticklette.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,6 +28,15 @@ builder.Services.AddDbContext<TickletteContext>(options =>
 // Identity
 builder.Services.AddIdentityApiEndpoints<User>()
     .AddEntityFrameworkStores<TickletteContext>();
+
+builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<OrganizingHouseService>();
+builder.Services.AddScoped<EventService>();
+builder.Services.AddScoped<TicketTypeService>();
+builder.Services.AddScoped<ProductService>();
+builder.Services.AddScoped<TicketService>();
+builder.Services.AddScoped<EntryService>();
+builder.Services.AddScoped<VirtualCurrencyService>();
 
 // Swagger
 builder.Services.AddEndpointsApiExplorer();
