@@ -4,15 +4,33 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using Microsoft.OpenApi.Models;
 using Ticklette.Domain.Data;
 using Ticklette.Domain.Models;
 using Ticklette.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configuración para Somee.com
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    serverOptions.Limits.MaxRequestBodySize = 52428800; // 50MB para uploads
+});
+
 // Add services to the container.
 builder.Services.AddControllers();
 // Swagger
+
+builder.Services.AddCors(options =>
+{
+    // Política más permisiva para desarrollo
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
 
 builder.Services.AddEndpointsApiExplorer();
     
@@ -27,26 +45,37 @@ builder.Services.AddSwaggerGen(options =>
         BearerFormat = "JWT",
         Description = "JWT Authorization header using the Bearer scheme."
     });
-    options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
-        [new OpenApiSecuritySchemeReference("bearer", document)] = []
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
     });
 });
 
 // DbContext
 string defaultConnection = string.Empty;
 
-if (builder.Environment.IsDevelopment())
-{
-    defaultConnection = builder.Configuration.GetConnectionString("DevelopmentDefaultConnection")
-                        ?? throw new InvalidOperationException("Connection string 'DevelopmentDefaultConnection' not found.");
-}
-else
-{
-    defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection")
+// if (builder.Environment.IsDevelopment())
+// {
+//     defaultConnection = builder.Configuration.GetConnectionString("DevelopmentDefaultConnection")
+//                         ?? throw new InvalidOperationException("Connection string 'DevelopmentDefaultConnection' not found.");
+// }
+// else
+// {
+//     defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection")
+//                         ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+// }
+defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection")
                         ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-}
-
 builder.Services.AddDbContext<TickletteContext>(options =>
     options.UseSqlServer(defaultConnection));
 
