@@ -20,7 +20,7 @@ public class CreateOrganizerRequest
     [Required]
     [StringLength(100, MinimumLength = 6)]
     public string Password { get; set; } = string.Empty;
-
+    public string PhotoUrl { get; set; } = string.Empty;
     // Datos del organizador
     [StringLength(255)]
     public string Company { get; set; } = string.Empty;

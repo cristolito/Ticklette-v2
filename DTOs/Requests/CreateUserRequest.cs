@@ -22,4 +22,5 @@ public class CreateUserRequest
 
     [Range(0, 1)]
     public int CustomRole { get; set; } = 0;
+    public string PhotoUrl { get; set; } = string.Empty;
 }

@@ -8,4 +8,5 @@ public class UserResponse
     public string LastName { get; set; } = string.Empty;
     public int CustomRole { get; set; }
     public DateTime CreatedAt { get; set; }
+    public string PhotoUrl { get; set; } = string.Empty;
 }

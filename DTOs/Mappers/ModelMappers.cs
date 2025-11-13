@@ -74,7 +74,8 @@ public static class UserMappers
             FirstName = user.FirstName,
             LastName = user.LastName,
             CustomRole = user.CustomRole,
-            CreatedAt = user.CreatedAt
+            CreatedAt = user.CreatedAt,
+            PhotoUrl = user.PhotoUrl
         };
     }
 
@@ -86,7 +87,8 @@ public static class UserMappers
             Email = request.Email,
             FirstName = request.FirstName,
             LastName = request.LastName,
-            CustomRole = request.CustomRole
+            CustomRole = request.CustomRole,
+            PhotoUrl = request.PhotoUrl
         };
     }
 }

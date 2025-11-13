@@ -33,7 +33,7 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddEndpointsApiExplorer();
-    
+
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo { Title = "Ticklette API", Version = "v1" });
@@ -64,18 +64,9 @@ builder.Services.AddSwaggerGen(options =>
 // DbContext
 string defaultConnection = string.Empty;
 
-// if (builder.Environment.IsDevelopment())
-// {
-//     defaultConnection = builder.Configuration.GetConnectionString("DevelopmentDefaultConnection")
-//                         ?? throw new InvalidOperationException("Connection string 'DevelopmentDefaultConnection' not found.");
-// }
-// else
-// {
-//     defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection")
-//                         ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-// }
 defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection")
-                        ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+                    ?? throw new InvalidOperationException("Connection string 'DevelopmentDefaultConnection' not found.");
+
 builder.Services.AddDbContext<TickletteContext>(options =>
     options.UseSqlServer(defaultConnection));
 

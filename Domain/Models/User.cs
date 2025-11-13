@@ -12,6 +12,7 @@ public class User : IdentityUser
     // Rol personalizado adicional si lo necesitas
     [Range(0, 1)]
     public int CustomRole { get; set; }
+    public string PhotoUrl { get; set; } = string.Empty;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }

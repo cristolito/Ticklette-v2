@@ -26,4 +26,5 @@ public class CreateAttendeeRequest
     [Required]
     [StringLength(50)]
     public string Gender { get; set; } = string.Empty;
+    public string PhotoUrl { get; set; } = string.Empty;
 }
