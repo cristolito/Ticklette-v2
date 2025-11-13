@@ -23,6 +23,7 @@ public class VirtualCurrencyController : ControllerBase
     }
 
     [HttpGet("balance")]
+    [Authorize]
     public async Task<IActionResult> GetBalance()
     {
         var userId = _userManager.GetUserId(User);
@@ -33,6 +34,7 @@ public class VirtualCurrencyController : ControllerBase
     }
 
     [HttpPost("add-balance")]
+    [Authorize]
     public async Task<IActionResult> AddBalance([FromBody] decimal amount)
     {
         var userId = _userManager.GetUserId(User);
@@ -45,7 +47,7 @@ public class VirtualCurrencyController : ControllerBase
     }
 
     [HttpPut("balance")]
-    [Authorize(Roles = "Admin")] // Solo administradores pueden setear balance directamente
+    [Authorize] // Solo administradores pueden setear balance directamente
     public async Task<IActionResult> UpdateBalance(string userId, [FromBody] UpdateVirtualCurrencyRequest request)
     {
         var result = await _currencyService.UpdateBalanceAsync(userId, request);

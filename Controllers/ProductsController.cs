@@ -48,6 +48,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpPost("event/{eventId}")]
+    [Authorize]
     public async Task<IActionResult> CreateProduct(int eventId, [FromBody] CreateProductRequest request)
     {
         // Verificar permisos sobre el evento
@@ -68,6 +69,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize]
     public async Task<IActionResult> UpdateProduct(int id, [FromBody] CreateProductRequest request)
     {
         var product = await _productService.GetProductByIdAsync(id);
@@ -93,6 +95,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize]
     public async Task<IActionResult> DeleteProduct(int id)
     {
         var product = await _productService.GetProductByIdAsync(id);

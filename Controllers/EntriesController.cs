@@ -23,6 +23,7 @@ public class EntriesController : ControllerBase
     }
 
     [HttpPost]
+    [AllowAnonymous]
     public async Task<IActionResult> CreateEntry([FromBody] CreateEntryRequest request)
     {
         var entry = await _entryService.CreateEntryAsync(request);
@@ -33,6 +34,7 @@ public class EntriesController : ControllerBase
     }
 
     [HttpGet("event/{eventId}")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetEventEntries(int eventId)
     {
         var entries = await _entryService.GetEntriesByEventAsync(eventId);
@@ -40,6 +42,7 @@ public class EntriesController : ControllerBase
     }
 
     [HttpGet("check-ticket/{ticketId}")]
+    [AllowAnonymous]
     public async Task<IActionResult> CheckTicket(int ticketId)
     {
         var canEnter = await _entryService.CanTicketEnterAsync(ticketId);

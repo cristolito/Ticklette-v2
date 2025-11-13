@@ -48,6 +48,7 @@ public class TicketTypesController : ControllerBase
     }
 
     [HttpPost("event/{eventId}")]
+    [Authorize]
     public async Task<IActionResult> CreateTicketType(int eventId, [FromBody] CreateTicketTypeRequest request)
     {
         // Verificar permisos sobre el evento
@@ -68,6 +69,7 @@ public class TicketTypesController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize]
     public async Task<IActionResult> UpdateTicketType(int id, [FromBody] CreateTicketTypeRequest request)
     {
         var ticketType = await _ticketTypeService.GetTicketTypeByIdAsync(id);
@@ -91,6 +93,7 @@ public class TicketTypesController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize]
     public async Task<IActionResult> DeleteTicketType(int id)
     {
         var ticketType = await _ticketTypeService.GetTicketTypeByIdAsync(id);

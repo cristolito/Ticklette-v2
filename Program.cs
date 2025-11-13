@@ -1,5 +1,9 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
 using Ticklette.Domain.Data;
 using Ticklette.Domain.Models;
 using Ticklette.Services;
@@ -9,8 +13,25 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllers();
 // Swagger
+
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+    
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo { Title = "Ticklette API", Version = "v1" });
+
+    options.AddSecurityDefinition("bearer", new OpenApiSecurityScheme
+    {
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        Description = "JWT Authorization header using the Bearer scheme."
+    });
+    options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+    {
+        [new OpenApiSecuritySchemeReference("bearer", document)] = []
+    });
+});
 
 // DbContext
 string defaultConnection = string.Empty;
@@ -37,9 +58,40 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
     options.Password.RequireLowercase = true;
     options.Password.RequireUppercase = false;
     options.Password.RequireNonAlphanumeric = false;
+    options.User.RequireUniqueEmail = true;
 })
 .AddEntityFrameworkStores<TickletteContext>()
 .AddDefaultTokenProviders();
+
+// JWT Authentication
+var jwtSettings = builder.Configuration.GetSection("Jwt");
+var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]!);
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtSettings["Issuer"],
+        ValidAudience = jwtSettings["Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(key),
+        ClockSkew = TimeSpan.Zero
+    };
+});
+// .AddGoogle(options =>
+// {
+//     options.ClientId = builder.Configuration["Authentication:Google:ClientId"]!;
+//     options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"]!;
+// });
 
 // Configurar políticas de autorización
 builder.Services.AddAuthorizationBuilder()
@@ -67,6 +119,8 @@ app.UseSwaggerUI(options => // UseSwaggerUI is called only in Development.
 
 app.UseHttpsRedirection();
 
+// IMPORTANTE: Authentication antes de Authorization
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 

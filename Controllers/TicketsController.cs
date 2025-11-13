@@ -23,6 +23,7 @@ public class TicketsController : ControllerBase
     }
 
     [HttpPost("purchase")]
+    [Authorize]
     public async Task<IActionResult> PurchaseTickets([FromBody] PurchaseTicketRequest request)
     {
         var userId = _userManager.GetUserId(User);
@@ -40,6 +41,7 @@ public class TicketsController : ControllerBase
     }
 
     [HttpPost("purchase-product")]
+    [Authorize]
     public async Task<IActionResult> PurchaseProduct([FromBody] PurchaseProductRequest request)
     {
         var userId = _userManager.GetUserId(User);
@@ -57,6 +59,7 @@ public class TicketsController : ControllerBase
     }
 
     [HttpGet("my-tickets")]
+    [Authorize]
     public async Task<IActionResult> GetMyTickets()
     {
         var userId = _userManager.GetUserId(User);

@@ -25,6 +25,7 @@ public class EventsController : ControllerBase
     }
 
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> GetEvents([FromQuery] PagedRequest request)
     {
         var events = await _eventService.GetEventsAsync(request);
@@ -32,6 +33,7 @@ public class EventsController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetEvent(int id)
     {
         var eventEntity = await _eventService.GetEventByIdAsync(id);
@@ -40,7 +42,7 @@ public class EventsController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "Organizer")]
+    [Authorize]
     public async Task<IActionResult> CreateEvent([FromBody] CreateEventRequest request)
     {
         // Verificar que el usuario tenga permisos sobre la house
@@ -59,7 +61,7 @@ public class EventsController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    [Authorize(Roles = "Organizer")]
+    [Authorize]
     public async Task<IActionResult> UpdateEvent(int id, [FromBody] UpdateEventRequest request)
     {
         var eventEntity = await _eventService.GetEventByIdAsync(id);
@@ -80,7 +82,7 @@ public class EventsController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Organizer")]
+    [Authorize]
     public async Task<IActionResult> DeleteEvent(int id)
     {
         var eventEntity = await _eventService.GetEventByIdAsync(id);
@@ -103,6 +105,7 @@ public class EventsController : ControllerBase
     }
 
     [HttpGet("house/{houseId}")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetEventsByHouse(int houseId)
     {
         var events = await _eventService.GetEventsByHouseAsync(houseId);

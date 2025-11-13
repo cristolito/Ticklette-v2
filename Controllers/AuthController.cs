@@ -1,9 +1,8 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Ticklette.Domain.Models;
-using Ticklette.DTOs.Mappers;
 using Ticklette.DTOs.Requests;
-using Ticklette.DTOs.Responses;
 using Ticklette.Services;
 
 namespace Ticklette.Controllers;
@@ -48,29 +47,32 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        var user = await _userManager.FindByEmailAsync(request.Email);
-        if (user == null)
+        var result = await _authService.LoginAsync(request);
+        if (result == null)
             return Unauthorized("Invalid credentials");
 
-        var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, false);
-        if (!result.Succeeded)
-            return Unauthorized("Invalid credentials");
+        return Ok(result);
+    }
 
-        // Generar token manualmente (simplificado para el ejemplo)
-        var token = await GenerateJwtToken(user);
+    [HttpPost("google-login")]
+    public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequest request)
+    {
+        // En un escenario real, validarías el token de Google aquí
+        // Por simplicidad, asumimos que el frontend ya validó el token
         
-        var userResponse = user.ToUserResponse();
-        var loginResponse = new LoginResponse
-        {
-            Token = token,
-            Expiration = DateTime.UtcNow.AddHours(2),
-            User = userResponse
-        };
+        var result = await _authService.HandleGoogleLoginAsync(
+            request.Email, 
+            request.FirstName, 
+            request.LastName);
+            
+        if (result == null)
+            return BadRequest("Failed to authenticate with Google");
 
-        return Ok(loginResponse);
+        return Ok(result);
     }
 
     [HttpGet("profile")]
+    [Authorize] // Requiere autenticación
     public async Task<IActionResult> GetProfile()
     {
         var userId = _userManager.GetUserId(User);
@@ -82,26 +84,5 @@ public class AuthController : ControllerBase
             return NotFound();
 
         return Ok(profile);
-    }
-
-    private async Task<string> GenerateJwtToken(User user)
-    {
-        // Implementación simplificada - en producción usar JWT real
-        var claims = new List<System.Security.Claims.Claim>
-        {
-            new(System.Security.Claims.ClaimTypes.NameIdentifier, user.Id),
-            new(System.Security.Claims.ClaimTypes.Email, user.Email!),
-            new("customRole", user.CustomRole.ToString())
-        };
-
-        // Agregar roles si es necesario
-        var roles = await _userManager.GetRolesAsync(user);
-        foreach (var role in roles)
-        {
-            claims.Add(new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, role));
-        }
-
-        // En producción, generar JWT real aquí
-        return $"mock-token-{user.Id}-{DateTime.UtcNow.Ticks}";
     }
 }

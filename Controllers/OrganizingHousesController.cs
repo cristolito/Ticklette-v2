@@ -23,6 +23,7 @@ public class OrganizingHousesController : ControllerBase
     }
 
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> GetMyHouses()
     {
         var userId = _userManager.GetUserId(User);
@@ -36,6 +37,7 @@ public class OrganizingHousesController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetHouse(int id)
     {
         var house = await _houseService.GetHouseByIdAsync(id);
@@ -52,6 +54,7 @@ public class OrganizingHousesController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize]
     public async Task<IActionResult> CreateHouse([FromBody] CreateOrganizingHouseRequest request)
     {
         var userId = _userManager.GetUserId(User);
@@ -65,6 +68,7 @@ public class OrganizingHousesController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize]
     public async Task<IActionResult> UpdateHouse(int id, [FromBody] CreateOrganizingHouseRequest request)
     {
         var house = await _houseService.GetHouseByIdAsync(id);
@@ -82,6 +86,7 @@ public class OrganizingHousesController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize]
     public async Task<IActionResult> DeleteHouse(int id)
     {
         var house = await _houseService.GetHouseByIdAsync(id);
