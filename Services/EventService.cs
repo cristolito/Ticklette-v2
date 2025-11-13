@@ -10,10 +10,12 @@ namespace Ticklette.Services;
 public class EventService
 {
     private readonly TickletteContext _context;
+    private readonly CloudinaryService _cloudinaryService;
 
-    public EventService(TickletteContext context)
+    public EventService(TickletteContext context, CloudinaryService cloudinaryService)
     {
         _context = context;
+        _cloudinaryService = cloudinaryService;
     }
 
     // ✅ Obtener eventos con paginación y filtros
@@ -85,6 +87,22 @@ public class EventService
         var eventEntity = request.ToEventEntity();
         eventEntity.OrganizingHouseId = organizingHouseId;
         
+        // upload image if exists with error handling
+        if (request.ImageFile != null)
+        {
+            var uploadResult = await _cloudinaryService.UploadImageAsync(request.ImageFile, organizingHouseId.ToString());
+            if (uploadResult.StatusCode == System.Net.HttpStatusCode.OK)
+            {
+                eventEntity.ImageUrl = uploadResult.SecureUrl.ToString();
+            }
+            else
+            {
+                eventEntity.ImageUrl = null;
+                // Log the error
+                Console.WriteLine($"Cloudinary upload failed: {uploadResult.Error?.Message}");
+            }
+        }
+
         _context.Events.Add(eventEntity);
         await _context.SaveChangesAsync();
 
@@ -96,6 +114,21 @@ public class EventService
     {
         var eventEntity = await _context.Events.FindAsync(id);
         if (eventEntity == null) return null;
+
+        // upload image if exists with error handling
+        if (request.ImageFile != null)
+        {
+            var uploadResult = await _cloudinaryService.UploadImageAsync(request.ImageFile, eventEntity.OrganizingHouseId.ToString());
+            if (uploadResult.StatusCode == System.Net.HttpStatusCode.OK)
+            {
+                eventEntity.ImageUrl = uploadResult.SecureUrl.ToString();
+            }
+            else
+            {
+                // Log the error
+                Console.WriteLine($"Cloudinary upload failed: {uploadResult.Error?.Message}");
+            }
+        }
 
         eventEntity.UpdateEventFromRequest(request);
         await _context.SaveChangesAsync();
@@ -133,5 +166,82 @@ public class EventService
         await _context.SaveChangesAsync();
         
         return true;
+    }
+
+     public async Task<EventResponse?> UploadEventImageAsync(int eventId, IFormFile imageFile)
+    {
+        var eventEntity = await _context.Events.FindAsync(eventId);
+        if (eventEntity == null)
+            return null;
+
+        try
+        {
+            // Eliminar imagen anterior si existe
+            if (!string.IsNullOrEmpty(eventEntity.ImageUrl))
+            {
+                await DeleteEventImageFromCloudinary(eventEntity.ImageUrl);
+            }
+
+            // Subir nueva imagen a Cloudinary
+            var uploadResult = await _cloudinaryService.UploadImageAsync(imageFile, eventEntity.OrganizingHouseId.ToString());
+            
+            if (uploadResult.StatusCode != System.Net.HttpStatusCode.OK)
+                throw new Exception($"Cloudinary upload failed: {uploadResult.Error?.Message}");
+
+            // Usar la URL segura proporcionada por Cloudinary
+            eventEntity.ImageUrl = uploadResult.SecureUrl.ToString();
+            await _context.SaveChangesAsync();
+
+            return eventEntity.ToEventResponse();
+        }
+        catch (Exception ex)
+        {
+            // Log the exception
+            Console.WriteLine($"Error uploading image: {ex.Message}");
+            throw; // Relanzar para que el controlador pueda manejarlo
+        }
+    }
+
+    // ✅ Eliminar imagen de evento (corregido)
+    public async Task<EventResponse?> DeleteEventImageAsync(int eventId)
+    {
+        var eventEntity = await _context.Events.FindAsync(eventId);
+        if (eventEntity == null || string.IsNullOrEmpty(eventEntity.ImageUrl))
+            return null;
+
+        try
+        {
+            // Eliminar de Cloudinary
+            await DeleteEventImageFromCloudinary(eventEntity.ImageUrl);
+
+            // Limpiar URL en la base de datos
+            eventEntity.ImageUrl = null;
+            await _context.SaveChangesAsync();
+
+            return eventEntity.ToEventResponse();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error deleting image: {ex.Message}");
+            throw;
+        }
+    }
+
+    // ✅ Método helper para eliminar imagen de Cloudinary
+    private async Task DeleteEventImageFromCloudinary(string imageUrl)
+    {
+        try
+        {
+            var publicId = _cloudinaryService.ExtractPublicIdFromUrl(imageUrl);
+            if (!string.IsNullOrEmpty(publicId))
+            {
+                await _cloudinaryService.DeleteImageAsync(publicId);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Warning: Could not delete image from Cloudinary: {ex.Message}");
+            // No relanzamos la excepción para no bloquear la operación principal
+        }
     }
 }

@@ -107,6 +107,9 @@ builder.Services.AddScoped<TicketService>();
 builder.Services.AddScoped<EntryService>();
 builder.Services.AddScoped<VirtualCurrencyService>();
 
+// Cloudinary Service
+builder.Services.AddScoped<CloudinaryService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

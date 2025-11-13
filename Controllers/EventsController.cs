@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Ticklette.Domain.Models;
 using Ticklette.DTOs.Requests;
-using Ticklette.DTOs.Responses;
 using Ticklette.DTOs.Common;
 using Ticklette.Services;
 
@@ -43,7 +42,8 @@ public class EventsController : ControllerBase
 
     [HttpPost]
     [Authorize]
-    public async Task<IActionResult> CreateEvent([FromBody] CreateEventRequest request)
+    [Consumes("multipart/form-data")] // ✅ IMPORTANTE: Especificar el tipo de contenido
+    public async Task<IActionResult> CreateEvent([FromForm] CreateEventRequest request)
     {
         // Verificar que el usuario tenga permisos sobre la house
         var userId = _userManager.GetUserId(User);
@@ -62,7 +62,8 @@ public class EventsController : ControllerBase
 
     [HttpPut("{id}")]
     [Authorize]
-    public async Task<IActionResult> UpdateEvent(int id, [FromBody] UpdateEventRequest request)
+    [Consumes("multipart/form-data")] // ✅ IMPORTANTE: Especificar el tipo de contenido
+    public async Task<IActionResult> UpdateEvent(int id, [FromForm] UpdateEventRequest request)
     {
         var eventEntity = await _eventService.GetEventByIdAsync(id);
         if (eventEntity == null) return NotFound();
